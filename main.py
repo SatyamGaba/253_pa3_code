@@ -133,7 +133,7 @@ def val(epoch):
         
         '********  Calculating IOU for images for all valid classes  ********'
         out = iou(outputs, targets)
-        print(out)
+        #print(out)
         final = np.vstack((final, out))
         
         '******** caluculate validation loss  ********'
@@ -180,7 +180,7 @@ def test():
         
         '********  Calculating IOU for images for all valid classes  ********'
         out = iou(outputs, targets)
-        print(out)
+        #print(out)
         final = np.vstack((final, out))        
         
         _, predicted = torch.max(outputs.data, 1)
