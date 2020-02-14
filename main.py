@@ -115,12 +115,7 @@ def train():
 
 def val(epoch):
     model.eval()
-#     TP = [0 for i in range(34)]
-#     TP = torch.FloatTensor(TP)
-#     FN = [0 for i in range(34)]
-#     FN = torch.FloatTensor(FN)
-#     FP = [0 for i in range(34)]
-#     FP = torch.FloatTensor(FP)
+
     #Complete this function - Calculate loss, accuracy and IoU for every epoch
     # Make sure to include a softmax after the output from your model
     # Evaluate
@@ -135,6 +130,12 @@ def val(epoch):
             inputs, labels = inputs.cuda(), labels.cuda()
 
         outputs = model(inputs)
+        
+        '********  Calculating IOU for images for all valid classes  ********'
+        out = iou(outputs, targets)
+        print(out)
+        final = np.vstack((final, out))
+        
         '******** caluculate validation loss  ********'
         loss = criterion(outputs, labels)
         '******** accumulate running_loss for each batch ********'
@@ -149,43 +150,22 @@ def val(epoch):
         correct = np.where(predict == labels, 1, 0).sum()
         total = predict.size
 
+    '********  Average IOU for each class and overall average IOU  ********'
+    final = np.mean(final, axis = 0)
+    avg_final = np.mean(final)         
 
-        # _, predicted = torch.max(outputs.data, 1)
-        # total += labels.size(0)
-        # correct += predicted.eq(labels.data).cpu().sum()
-        
-       
-#         tp = list()
-#         tp = torch.FloatTensor(tp)
-#         fp = list()
-#         fp = torch.FloatTensor(fp)
-#         fn = list()
-#         fn = torch.FloatTensor(fn)
-#         tp, fp, fn = iou(outputs, targets)
-#         TP = [sum(x) for x in zip(TP,tp)]
-#         FP = [sum(x) for x in zip(FP,fp)]
-#         FN = [sum(x) for x in zip(FN,fn)]
-
-#     union = TP
-#     intersection = [i+j+k for i,j,k in zip(TP,FP,FN)]
-#     class_iou = [u/i for u, i in zip(union, intersection)]
-#     av_iou = sum(class_iou)/len(class_iou)
     
     print('Epoch : %d Validation Pixel Acc : %.3f' % (epoch + 1, 100.*correct/total))
-    #print('--------------------------------------------------------------')
-    #print('Epoch : %d Validation Avg IOU : %.3f' % (epoch + 1, av_iou))
-    #print('--------------------------------------------------------------')
-    #print('Epoch : %d Each class IOU : %.3f' % (epoch + 1, class_iou))
+    print('--------------------------------------------------------------')
+    print('Epoch : %d Validation Avg IOU : %.3f' % (epoch + 1, avg_final))
+    print('--------------------------------------------------------------')
+    print('Epoch : %d Each class IOU : %.3f' % (epoch + 1, final))
+
     return (running_loss/len(val_loader))
 
 def test():
     model.eval()
-#     TP = [0 for i in range(34)]
-#     TP = torch.FloatTensor(TP)
-#     FN = [0 for i in range(34)]
-#     FN = torch.FloatTensor(FN)
-#     FP = [0 for i in range(34)]
-#     FP = torch.FloatTensor(FP)
+
     #Complete this function - Calculate loss, accuracy and IoU for every epoch
     # Make sure to include a softmax after the output from your model
     # Evaluate
@@ -198,33 +178,27 @@ def test():
 
         outputs = model(inputs)
         
+        '********  Calculating IOU for images for all valid classes  ********'
+        out = iou(outputs, targets)
+        print(out)
+        final = np.vstack((final, out))        
         
         _, predicted = torch.max(outputs.data, 1)
         total += labels.size(0)
         correct += predicted.eq(labels.data).cpu().sum()
         
        
-#         tp = list()
-#         tp = torch.FloatTensor(tp)
-#         fp = list()
-#         fp = torch.FloatTensor(fp)
-#         fn = list()
-#         fn = torch.FloatTensor(fn)
-#         tp, fp, fn = iou(outputs, targets)
-#         TP = [sum(x) for x in zip(TP,tp)]
-#         FP = [sum(x) for x in zip(FP,fp)]
-#         FN = [sum(x) for x in zip(FN,fn)]
 
-#     union = TP
-#     intersection = [i+j+k for i,j,k in zip(TP,FP,FN)]
-#     class_iou = [u/i for u, i in zip(union, intersection)]
-#     av_iou = sum(class_iou)/len(class_iou)
-    
-    print('Test Pixel Acc : %.3f' %  100.*correct/total)
+    '********  Average IOU for each class and overall average IOU  ********'
+    final = np.mean(final, axis = 0)
+    avg_final = np.mean(final)
+          
+        
+    print('Epoch : %d Test Pixel Acc : %.3f' % (epoch + 1, 100.*correct/total))
     print('--------------------------------------------------------------')
-#     print('Test Avg IOU : %.3f' % av_iou)
-#     print('--------------------------------------------------------------')
-#     print('Each class IOU : %.3f' % class_iou)
+    print('Epoch : %d Test Avg IOU : %.3f' % (epoch + 1, avg_final))
+    print('--------------------------------------------------------------')
+    print('Epoch : %d Each class IOU : %.3f' % (epoch + 1, final))
     
 
     #Complete this function - Calculate accuracy and IoU 
