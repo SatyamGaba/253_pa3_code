@@ -116,7 +116,7 @@ def val(epoch):
     total = 0
     correct = 0
     running_loss = 0.0
-    
+    final = np.ones((1,19))
     for iter, (inputs, labels) in tqdm(enumerate(val_loader)):
         inputs, labels = inputs, labels.long()
         if use_gpu:
@@ -140,7 +140,7 @@ def val(epoch):
         correct = np.where(predict == labels, 1, 0).sum()
         total = predict.size
 
-    final = np.mean(final, axis = 0)
+    final = np.mean(final[1:,], axis = 0)
     avg_final = np.mean(final)         
 
     
@@ -154,7 +154,7 @@ def val(epoch):
 
 def test():
     model.eval()
-
+    final = np.ones((1,19))  
     #Complete this function - Calculate loss, accuracy and IoU for every epoch
     # Make sure to include a softmax after the output from your model
     # Evaluate
@@ -175,7 +175,7 @@ def test():
         total += labels.size(0)
         correct += predicted.eq(labels.data).cpu().sum()
         
-    final = np.mean(final, axis = 0)
+    final = np.mean(final[1:,], axis = 0)
     avg_final = np.mean(final)
           
         
