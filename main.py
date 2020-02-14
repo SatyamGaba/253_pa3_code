@@ -56,14 +56,11 @@ if use_gpu:
     model = model.cuda()
     
 def train():
-    '********  losses for all epochs  ********'
     train_losses = []
     val_losses = []
     
     for epoch in range(epochs):
-        '******** running loss for one epoch  ********'
         running_loss = 0.0
-        
         ts = time.time()
         for iter, (X, Y) in tqdm(enumerate(train_loader), desc ="Iteration num: "): # X=input_images, tar=one-hot labelled, y=segmentated
             optimizer.zero_grad()
@@ -81,8 +78,6 @@ def train():
             loss = criterion(outputs, labels)
             loss.backward()
             optimizer.step()
-            
-            '******** accumulate running_loss for each batch ********'
             running_loss += loss.item() * inputs.size(0)
 
             if iter % 10 == 0:
@@ -91,9 +86,7 @@ def train():
         print("Finish epoch {}, time elapsed {}".format(epoch, time.time() - ts))
         torch.save(model.state_dict(), "./saved_models/resnet18_"+str(epoch))
         
-        '******** save average training loss for each epoch  ********'
         train_losses.append(running_loss/len(train_loader))
-        '******** save average validation loss for each epoch  ********'
         val_loss = val(epoch)
         torch.cuda.empty_cache()
         val_losses.append(val_loss)
@@ -122,7 +115,6 @@ def val(epoch):
     # Evaluate
     total = 0
     correct = 0
-    '******** running loss for one epoch  ********'
     running_loss = 0.0
     
     for iter, (inputs, labels) in tqdm(enumerate(val_loader)):
@@ -132,14 +124,11 @@ def val(epoch):
 
         outputs = model(inputs)
         
-        '********  Calculating IOU for images for all valid classes  ********'
         out = iou(outputs, labels)
         #print(out)
         final = np.vstack((final, out))
         
-        '******** caluculate validation loss  ********'
         loss = criterion(outputs, labels)
-        '******** accumulate running_loss for each batch ********'
         running_loss += loss.item() * inputs.size(0)
         
         outputs = outputs.cpu()
@@ -151,7 +140,6 @@ def val(epoch):
         correct = np.where(predict == labels, 1, 0).sum()
         total = predict.size
 
-    '********  Average IOU for each class and overall average IOU  ********'
     final = np.mean(final, axis = 0)
     avg_final = np.mean(final)         
 
@@ -179,7 +167,6 @@ def test():
 
         outputs = model(inputs)
         
-        '********  Calculating IOU for images for all valid classes  ********'
         out = iou(outputs, labels)
         #print(out)
         final = np.vstack((final, out))        
@@ -188,9 +175,6 @@ def test():
         total += labels.size(0)
         correct += predicted.eq(labels.data).cpu().sum()
         
-       
-
-    '********  Average IOU for each class and overall average IOU  ********'
     final = np.mean(final, axis = 0)
     avg_final = np.mean(final)
           
