@@ -45,7 +45,7 @@ criterion = nn.CrossEntropyLoss() # Choose an appropriate loss function from htt
 model = Resnet18(n_class=n_class)
 # model = FCN(n_class=n_class)
 # model.apply(init_weights)
-model = torch.load_state_dict(torch.load('resnet18_1'))
+# model.load_state_dict(torch.load('./saved_models/resnet18_1'))
 optimizer = optim.Adam(model.parameters(), lr=5e-3)
 
 
@@ -88,7 +88,7 @@ def train():
                 print("epoch{}, iter{}, loss: {}".format(epoch, iter, loss.item()))
         
         print("Finish epoch {}, time elapsed {}".format(epoch, time.time() - ts))
-        torch.save(model.state_dict(), "resnet18_"+str(epoch))
+        torch.save(model.state_dict(), "./saved_models/resnet18_"+str(epoch))
         
         '******** save average training loss for each epoch  ********'
         train_losses.append(running_loss/len(train_loader))
@@ -132,7 +132,7 @@ def val(epoch):
         outputs = model(inputs)
         
         '********  Calculating IOU for images for all valid classes  ********'
-        out = iou(outputs, targets)
+        out = iou(outputs, labels)
         #print(out)
         final = np.vstack((final, out))
         
@@ -179,7 +179,7 @@ def test():
         outputs = model(inputs)
         
         '********  Calculating IOU for images for all valid classes  ********'
-        out = iou(outputs, targets)
+        out = iou(outputs, labels)
         #print(out)
         final = np.vstack((final, out))        
         
