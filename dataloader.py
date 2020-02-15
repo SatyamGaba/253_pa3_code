@@ -82,13 +82,12 @@ labels_classes = [
 
 class CityScapesDataset(Dataset):
 
-    def __init__(self, csv_file, n_class=n_class, transforms=None, seed_fn=None):
+    def __init__(self, csv_file, n_class=n_class, transforms=None):
         self.data      = pd.read_csv(csv_file)
         self.means     = means
         self.n_class   = n_class
         # Add any transformations here
         self.transforms = transforms
-        self.seed_fn = seed_fn
 
     def __len__(self):
         return len(self.data)
@@ -96,9 +95,7 @@ class CityScapesDataset(Dataset):
     def _set_seed(self, seed):
         random.seed(seed)
         torch.manual_seed(seed)
-        if self.seed_fn:
-            self.seed_fn(seed)
-
+        
     def __getitem__(self, idx):
         img_name   = self.data.iloc[idx, 0]
 
