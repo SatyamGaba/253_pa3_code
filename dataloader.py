@@ -104,11 +104,12 @@ class CityScapesDataset(Dataset):
         label      = Image.open(label_name)
         
         # augmentation
-        seed = random.randint(0, 2**32)
-        self._set_seed(seed)
-        img = self.transforms(img)
-        self._set_seed(seed)
-        label = self.transforms(label)
+        if self.transforms:
+            seed = random.randint(0, 2**32)
+            self._set_seed(seed)
+            img = self.transforms(img)
+            self._set_seed(seed)
+            label = self.transforms(label)
         
         img = np.asarray(img)
         label = np.asarray(label)
