@@ -113,12 +113,12 @@ def train(init_epoch=0):
         torch.cuda.empty_cache()
         
     x = [i for i in range(epochs)]
-    plt.title("Plot showing training and validation loss against number of epochs")
+    plt.title("ResNet: Plot of Training/Validation Loss vs # epochs")
     plt.xlabel("Number of epochs")
     plt.ylabel("Loss")
     plt.plot(x, train_losses, color='r', label='training loss')
     plt.plot(x, val_losses, color = 'b', label = 'validation loss')
-    
+    plt.grid(True)
     plt.legend()
     plt.savefig("./results/%s-loss.png"%(model_name))
 
