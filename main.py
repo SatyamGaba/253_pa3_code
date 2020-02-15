@@ -148,7 +148,7 @@ def val(epoch):
         inters = [inters[p]+curr_in[p] for p in range(len(inters))]
         unions = [unions[p]+curr_un[p] for p in range(len(unions))]
 
-    ious = [inters[p]/unions[p] for p in range(len(inters))]
+    ious = [inters[p]/unions[p] if unions[p]!=0 else 0 for p in range(len(inters))]
     avg_iou = sum(ious)/len(ious)        
 
     
