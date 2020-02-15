@@ -91,6 +91,12 @@ class CityScapesDataset(Dataset):
 
     def __len__(self):
         return len(self.data)
+    
+    def _set_seed(self, seed):
+        random.seed(seed)
+        torch.manual_seed(seed)
+        if self.seed_fn:
+            self.seed_fn(seed)
 
     def __getitem__(self, idx):
         img_name   = self.data.iloc[idx, 0]
