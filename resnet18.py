@@ -1,8 +1,6 @@
 import torch.nn as nn
 import torchvision.models as models
 
-
-# print(model)
 class Resnet18(nn.Module):
 
     def __init__(self, n_class):
@@ -41,8 +39,9 @@ class Resnet18(nn.Module):
         x = self.bn3(self.relu(self.deconv3(x)))
         x = self.bn4(self.relu(self.deconv4(x)))
         out_decoder = self.bn5(self.relu(self.deconv5(x)))
-        score = self.classifier(out_decoder)                   
-        
-        # ***** might have to include softmax
+        score = self.classifier(out_decoder)
 
         return score  # size=(N, n_class, x.H/1, x.W/1)
+    
+# rnet =Resnet18(3)
+# print(rnet)

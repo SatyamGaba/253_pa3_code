@@ -50,7 +50,7 @@ def init_weights(m):
         nn.init.constant_(m.bias, 0)
         
 n_class = 34
-epochs = 100
+epochs = 20
 criterion = nn.CrossEntropyLoss() # Choose an appropriate loss function from https://pytorch.org/docs/stable/_modules/torch/nn/modules/loss.html
 model = Resnet18(n_class=n_class)
 # model = FCN(n_class=n_class)
@@ -111,8 +111,7 @@ def train():
     plt.plot(x, val_losses, color = 'b', label = 'validation loss')
     
     plt.legend()
-    plt.show()
-
+    plt.savefig("./results/resnet18-loss.png")
 
 
 def val(epoch):
