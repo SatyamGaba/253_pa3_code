@@ -60,7 +60,7 @@ else:
 
 
 n_class = 34
-epochs = 20
+epochs = 5
 criterion = nn.CrossEntropyLoss() # Choose an appropriate loss function from https://pytorch.org/docs/stable/_modules/torch/nn/modules/loss.html
 # model = Resnet18(n_class=n_class)
 model = FCN(n_class=n_class)
@@ -95,7 +95,7 @@ def train(init_epoch=0):
             loss.backward()
             optimizer.step()
             running_loss += loss.item() * inputs.size(0)
-            if iter == 10:
+            if iter == 5:
                 break
             if iter % 50 == 0:
                 print("epoch{}, iter{}, loss: {}".format(epoch, iter, loss.item()))
@@ -120,7 +120,7 @@ def train(init_epoch=0):
     plt.plot(x, val_losses, color = 'b', label = 'validation loss')
     
     plt.legend()
-    plt.savefig("./results/resnet18-loss.png")
+    plt.savefig("./results/%s-loss.png"%(model_name))
 
 
 def val(epoch):
@@ -156,7 +156,7 @@ def val(epoch):
         curr_in, curr_un = iou(predict, labels)
         inters = [inters[p]+curr_in[p] for p in range(len(inters))]
         unions = [unions[p]+curr_un[p] for p in range(len(unions))]
-        if iter == 10:
+        if iter == 5:
             break
 
     ious = [inters[p]/unions[p] if unions[p]!=0 else 0 for p in range(len(inters))]
@@ -204,16 +204,18 @@ def test():
         curr_in, curr_un = iou(predict, labels)
         inters = [inters[p]+curr_in[p] for p in range(len(inters))]
         unions = [unions[p]+curr_un[p] for p in range(len(unions))]
+        if iter == 5:
+            break
 
     ious = [inters[p]/unions[p] if unions[p]!=0 else 0 for p in range(len(inters))]
     avg_iou = sum(ious)/len(ious)
     test_acc = 100 * (correct/total)      
     
-    print('Epoch : %d Test Pixel Acc : %.3f' % (epoch + 1, test_acc))
+    print('Test Pixel Acc : %.3f' % (test_acc))
     print('--------------------------------------------------------------')
-    print('Epoch : %d Test Avg IOU : %.3f' % (epoch + 1, avg_iou))
+    print('Test Avg IOU : %.3f' % (avg_iou))
     print('--------------------------------------------------------------')
-    print("Average IOU values for each class at the end of epoch ", epoch+1," are:", ious)
+    print("Average Test IOU values for each class : ", ious)
     
 
     #Complete this function - Calculate accuracy and IoU 
