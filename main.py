@@ -148,7 +148,8 @@ def val(epoch):
     print('--------------------------------------------------------------')
     print('Epoch : %d Validation Avg IOU : %.3f' % (epoch + 1, avg_final))
     print('--------------------------------------------------------------')
-    print('Epoch : %d Each class IOU : %.3f' % (epoch + 1, final))
+    print("Average IOU values for each class at the end of epoch ", epoch," are:", final)
+    
 
     return (running_loss/len(val_loader))
 
@@ -183,7 +184,7 @@ def test():
     print('--------------------------------------------------------------')
     print('Epoch : %d Test Avg IOU : %.3f' % (epoch + 1, avg_final))
     print('--------------------------------------------------------------')
-    print('Epoch : %d Each class IOU : %.3f' % (epoch + 1, final))
+    print("Average IOU values for each class at the end of epoch ", epoch," are:", final)
     
 
     #Complete this function - Calculate accuracy and IoU 
