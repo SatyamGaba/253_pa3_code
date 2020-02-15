@@ -24,6 +24,7 @@ augs = [
 tfs = transforms.Compose(augs)
 
 train_dataset = CityScapesDataset(csv_file='train.csv', transforms=tfs)
+# train_dataset = CityScapesDataset(csv_file='train.csv', transforms=transforms.RandomCrop(512,512))
 val_dataset = CityScapesDataset(csv_file='val.csv')
 test_dataset = CityScapesDataset(csv_file='test.csv')
 train_loader = DataLoader(dataset=train_dataset,
@@ -111,7 +112,6 @@ def train():
     
     plt.legend()
     plt.show()
-    plt.plot()
 
 
 
@@ -124,18 +124,15 @@ def val(epoch):
     total = 0
     correct = 0
     running_loss = 0.0
-    final = np.ones((1,19))
+    
+    inters = [0 for i in range(19)]
+    unions = [0 for i in range(19)]
     for iter, (inputs, labels) in tqdm(enumerate(val_loader)):
         inputs, labels = inputs, labels.long()
         if use_gpu:
             inputs, labels = inputs.cuda(), labels.cuda()
 
         outputs = model(inputs)
-        
-        out = iou(outputs, labels)
-        #print(out)
-        final = np.vstack((final, out))
-        
         loss = criterion(outputs, labels)
         running_loss += loss.item() * inputs.size(0)
         
@@ -147,16 +144,20 @@ def val(epoch):
         predict = np.argmax(outputs, axis = 1)
         correct = np.where(predict == labels, 1, 0).sum()
         total = predict.size
+        
+        curr_in, curr_un = iou(predict, labels)
+        inters = [inters[p]+curr_in[p] for p in range(len(inters))]
+        unions = [unions[p]+curr_un[p] for p in range(len(unions))]
 
-    final = np.mean(final[1:,], axis = 0)
-    avg_final = np.mean(final)         
+    ious = [inters[p]/unions[p] for p in range(len(inters))]
+    avg_iou = sum(ious)/len(ious)        
 
     
     print('Epoch : %d Validation Pixel Acc : %.3f' % (epoch + 1, 100.*correct/total))
     print('--------------------------------------------------------------')
-    print('Epoch : %d Validation Avg IOU : %.3f' % (epoch + 1, avg_final))
+    print('Epoch : %d Validation Avg IOU : %.3f' % (epoch + 1, avg_iou))
     print('--------------------------------------------------------------')
-    print("Average IOU values for each class at the end of epoch ", epoch," are:", final)
+    print("IOU values for each class at the end of epoch ", epoch+1," are:", ious)
     
 
     return (running_loss/len(val_loader))
@@ -192,12 +193,12 @@ def test():
     print('--------------------------------------------------------------')
     print('Epoch : %d Test Avg IOU : %.3f' % (epoch + 1, avg_final))
     print('--------------------------------------------------------------')
-    print("Average IOU values for each class at the end of epoch ", epoch," are:", final)
+    print("Average IOU values for each class at the end of epoch ", epoch+1," are:", )
     
 
     #Complete this function - Calculate accuracy and IoU 
     # Make sure to include a softmax after the output from your model
     
 if __name__ == "__main__":
-    # val(0)  # show the accuracy before training
+#    val(0)  # show the accuracy before training
     train()
