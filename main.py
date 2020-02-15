@@ -13,27 +13,33 @@ from tqdm import tqdm, tqdm_notebook
 
 torch.cuda.empty_cache()
 
-augs = [
+augment = [
     transforms.RandomCrop(320),
     transforms.RandomRotation((0,90)),
     transforms.RandomHorizontalFlip(0.5),
     transforms.RandomVerticalFlip(0.5)
 ]
-tfs = transforms.Compose(augs)
+tfs = transforms.Compose(augment)
 
-train_dataset = CityScapesDataset(csv_file='train.csv', transforms=tfs)
-# train_dataset = CityScapesDataset(csv_file='train.csv', transforms=transforms.RandomCrop(512,512))
+augmentx = False # true, if augmentated dataset
+
+if augmentx:
+    aug_str = "aug"
+    train_dataset = CityScapesDataset(csv_file='train.csv', transforms=tfs)
+else:
+    aug_str = ""
+    train_dataset = CityScapesDataset(csv_file='train.csv', transforms=transforms.RandomCrop(512,512))
 val_dataset = CityScapesDataset(csv_file='val.csv')
 test_dataset = CityScapesDataset(csv_file='test.csv')
 train_loader = DataLoader(dataset=train_dataset,
                           batch_size=4,
                           num_workers=0,
-                          shuffle=False, 
+                          shuffle=True, 
                          )
 val_loader = DataLoader(dataset=val_dataset,
                           batch_size=2,
                           num_workers=0,
-                          shuffle=False)
+                          shuffle=True)
 test_loader = DataLoader(dataset=test_dataset,
                           batch_size=1,
                           num_workers=0,
@@ -60,7 +66,7 @@ else:
 
 
 n_class = 34
-epochs = 5
+epochs = 50
 criterion = nn.CrossEntropyLoss() # Choose an appropriate loss function from https://pytorch.org/docs/stable/_modules/torch/nn/modules/loss.html
 # model = Resnet18(n_class=n_class)
 model = FCN(n_class=n_class)
@@ -95,14 +101,14 @@ def train(init_epoch=0):
             loss.backward()
             optimizer.step()
             running_loss += loss.item() * inputs.size(0)
-            if iter == 5:
-                break
+            # if iter == 5:
+            #     break
             if iter % 50 == 0:
                 print("epoch{}, iter{}, loss: {}".format(epoch, iter, loss.item()))
         
         print("Finish epoch {}, time elapsed {}".format(epoch, time.time() - ts))
-        os.system('rm -r ./saved_models/%s/*'%(model_name))
-        torch.save(model.state_dict(), "./saved_models/%s/%s_%d_%.3f"%(model_name,model_name,epoch,loss.item()))
+        # os.system('rm -r ./saved_models/%s/*'%(model_name))
+        torch.save(model.state_dict(), "./saved_models/%s/%s_%s_%d_%.3f"%(model_name,model_name,aug_str,epoch,loss.item()))
         
         train_losses.append(running_loss/len(train_loader))
         val_loss = val(epoch)
@@ -156,8 +162,8 @@ def val(epoch):
         curr_in, curr_un = iou(predict, labels)
         inters = [inters[p]+curr_in[p] for p in range(len(inters))]
         unions = [unions[p]+curr_un[p] for p in range(len(unions))]
-        if iter == 5:
-            break
+        # if iter == 5:
+        #     break
 
     ious = [inters[p]/unions[p] if unions[p]!=0 else 0 for p in range(len(inters))]
     avg_iou = sum(ious)/len(ious)        
@@ -204,8 +210,8 @@ def test():
         curr_in, curr_un = iou(predict, labels)
         inters = [inters[p]+curr_in[p] for p in range(len(inters))]
         unions = [unions[p]+curr_un[p] for p in range(len(unions))]
-        if iter == 5:
-            break
+        # if iter == 5:
+        #     break
 
     ious = [inters[p]/unions[p] if unions[p]!=0 else 0 for p in range(len(inters))]
     avg_iou = sum(ious)/len(ious)
@@ -222,6 +228,8 @@ def test():
     # Make sure to include a softmax after the output from your model
     
 if __name__ == "__main__":
-    # val(0)  # show the accuracy before training
+    val_loss_0 = val(0)  # show the accuracy before training
     train(init_epoch=0)  # put last trained epoch number, if resuming the training
     test()
+
+    print("validation loss at epoch 0 :", str(val_loss_0))
