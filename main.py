@@ -149,7 +149,7 @@ def val(epoch):
         unions = [unions[p]+curr_un[p] for p in range(len(unions))]
 
     ious = [inters[p]/unions[p] if unions[p]!=0 else 0 for p in range(len(inters))]
-    avg_iou = sum(iters)/sum(unions)        
+    avg_iou = sum(inters)/sum(unions)        
 
     
     print('Epoch : %d Validation Pixel Acc : %.3f' % (epoch + 1, 100.*correct/total))
