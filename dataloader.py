@@ -82,12 +82,13 @@ labels_classes = [
 
 class CityScapesDataset(Dataset):
 
-    def __init__(self, csv_file, n_class=n_class, transforms=None):
+    def __init__(self, csv_file, n_class=n_class, transforms=None, seed_fn=None):
         self.data      = pd.read_csv(csv_file)
         self.means     = means
         self.n_class   = n_class
         # Add any transformations here
         self.transforms = transforms
+        self.seed_fn = seed_fn
 
     def __len__(self):
         return len(self.data)
