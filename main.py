@@ -3,15 +3,13 @@ from basic_fcn import *
 from resnet18 import *
 from dataloader import *
 from utils import *
-# from utils import *
 import torchvision
 import torch.nn.functional as F
 import torch.optim as optim
 from torch.autograd import Variable
-import time
+import time, os
 import matplotlib.pyplot as plt
 from tqdm import tqdm, tqdm_notebook
-# import sys
 
 torch.cuda.empty_cache()
 
@@ -28,14 +26,14 @@ train_dataset = CityScapesDataset(csv_file='train.csv', transforms=tfs)
 val_dataset = CityScapesDataset(csv_file='val.csv')
 test_dataset = CityScapesDataset(csv_file='test.csv')
 train_loader = DataLoader(dataset=train_dataset,
-                          batch_size=3,
+                          batch_size=4,
                           num_workers=0,
-                          shuffle=True, 
+                          shuffle=False, 
                          )
 val_loader = DataLoader(dataset=val_dataset,
                           batch_size=1,
                           num_workers=0,
-                          shuffle=True)
+                          shuffle=False)
 test_loader = DataLoader(dataset=test_dataset,
                           batch_size=1,
                           num_workers=0,
@@ -48,14 +46,20 @@ def init_weights(m):
         torch.nn.init.xavier_uniform_(m.weight.data)
 #         torch.nn.init.xavier_uniform(m.bias.data, 0)
         nn.init.constant_(m.bias, 0)
-        
+
+model_name = "basic_fcn"  # To create directory to save trained models
+try:
+    os.system('mkdir ./saved_models/%s'%(model_name))
+except:
+    print("directory already exists")
+    pass
 n_class = 34
 epochs = 20
 criterion = nn.CrossEntropyLoss() # Choose an appropriate loss function from https://pytorch.org/docs/stable/_modules/torch/nn/modules/loss.html
-model = Resnet18(n_class=n_class)
-# model = FCN(n_class=n_class)
-# model.apply(init_weights)
-# model.load_state_dict(torch.load('./saved_models/resnet18_1'))
+# model = Resnet18(n_class=n_class)
+model = FCN(n_class=n_class)
+model.apply(init_weights)
+# model.load_state_dict(torch.load('./saved_models/%s/resnet18_1'%(model_name)))
 optimizer = optim.Adam(model.parameters(), lr=5e-3)
 
 
@@ -67,7 +71,6 @@ if use_gpu:
 def train():
     train_losses = []
     val_losses = []
-    
     for epoch in range(epochs):
         running_loss = 0.0
         ts = time.time()
@@ -79,21 +82,21 @@ def train():
                 labels = Y.cuda() # Move your labels onto the gpu
                 inputs.required_grad = False
                 labels.required_grad = False
-
             else:
                 inputs, labels =  X, Y # Unpack variables into inputs and labels
-
             outputs = model(inputs)
             loss = criterion(outputs, labels)
             loss.backward()
             optimizer.step()
             running_loss += loss.item() * inputs.size(0)
-
-            if iter % 10 == 0:
+            if iter == 10:
+                break
+            if iter % 50 == 0:
                 print("epoch{}, iter{}, loss: {}".format(epoch, iter, loss.item()))
         
         print("Finish epoch {}, time elapsed {}".format(epoch, time.time() - ts))
-        torch.save(model.state_dict(), "./saved_models/resnet18_"+str(epoch))
+        os.system('rm -r ./saved_models/%s/*'%(model_name))
+        torch.save(model.state_dict(), "./saved_models/%s/%s_%d_%.3f"%(model_name,model_name,epoch,loss.item()))
         
         train_losses.append(running_loss/len(train_loader))
         val_loss = val(epoch)
@@ -147,6 +150,8 @@ def val(epoch):
         curr_in, curr_un = iou(predict, labels)
         inters = [inters[p]+curr_in[p] for p in range(len(inters))]
         unions = [unions[p]+curr_un[p] for p in range(len(unions))]
+        if iter == 10:
+            break
 
     ious = [inters[p]/unions[p] if unions[p]!=0 else 0 for p in range(len(inters))]
     avg_iou = sum(ious)/len(ious)        
@@ -162,42 +167,53 @@ def val(epoch):
     return (running_loss/len(val_loader))
 
 def test():
-    model.eval()
-    final = np.ones((1,19))  
+    model.eval() 
     #Complete this function - Calculate loss, accuracy and IoU for every epoch
     # Make sure to include a softmax after the output from your model
     # Evaluate
     total = 0
     correct = 0
-    for iter, (X, Y) in tqdm(enumerate(val_loader)):
-        inputs, labels = X, Y.long()
+    running_loss = 0.0
+    
+    inters = [0 for i in range(19)]
+    unions = [0 for i in range(19)]
+    for iter, (inputs, labels) in tqdm(enumerate(val_loader)):
+        inputs, labels = inputs, labels.long()
         if use_gpu:
             inputs, labels = inputs.cuda(), labels.cuda()
 
         outputs = model(inputs)
+        loss = criterion(outputs, labels)
+        running_loss += loss.item() * inputs.size(0)
         
-        out = iou(outputs, labels)
-        #print(out)
-        final = np.vstack((final, out))        
-        
-        _, predicted = torch.max(outputs.data, 1)
-        total += labels.size(0)
-        correct += predicted.eq(labels.data).cpu().sum()
-        
-    final = np.mean(final[1:,], axis = 0)
-    avg_final = np.mean(final)
-          
-        
-    print('Epoch : %d Test Pixel Acc : %.3f' % (epoch + 1, 100.*correct/total))
+        outputs = outputs.cpu()
+        outputs = outputs.detach().numpy()
+        labels = labels.cpu()
+        labels = labels.detach().numpy()
+
+        predict = np.argmax(outputs, axis = 1)
+        correct += np.where(predict == labels, 1, 0).sum()
+        total += predict.size
+
+        curr_in, curr_un = iou(predict, labels)
+        inters = [inters[p]+curr_in[p] for p in range(len(inters))]
+        unions = [unions[p]+curr_un[p] for p in range(len(unions))]
+
+    ious = [inters[p]/unions[p] if unions[p]!=0 else 0 for p in range(len(inters))]
+    avg_iou = sum(ious)/len(ious)
+    test_acc = 100 * (correct/total)      
+    
+    print('Epoch : %d Test Pixel Acc : %.3f' % (epoch + 1, test_acc))
     print('--------------------------------------------------------------')
-    print('Epoch : %d Test Avg IOU : %.3f' % (epoch + 1, avg_final))
+    print('Epoch : %d Test Avg IOU : %.3f' % (epoch + 1, avg_iou))
     print('--------------------------------------------------------------')
-    print("Average IOU values for each class at the end of epoch ", epoch+1," are:", )
+    print("Average IOU values for each class at the end of epoch ", epoch+1," are:", ious)
     
 
     #Complete this function - Calculate accuracy and IoU 
     # Make sure to include a softmax after the output from your model
     
 if __name__ == "__main__":
-#    val(0)  # show the accuracy before training
+    # val(0)  # show the accuracy before training
     train()
+    test()
