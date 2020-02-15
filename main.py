@@ -15,7 +15,15 @@ from tqdm import tqdm, tqdm_notebook
 
 torch.cuda.empty_cache()
 
-train_dataset = CityScapesDataset(csv_file='train.csv', transforms=transforms.RandomCrop(512,1024))
+augs = [
+    transforms.RandomCrop(512,1024),
+    transforms.RandomResizedCrop(299),
+    transforms.RandomRotation(45),
+    transforms.ToTensor()
+]
+tfs = transforms.Compose(augs)
+
+train_dataset = CityScapesDataset(csv_file='train.csv', transforms=tfs)
 val_dataset = CityScapesDataset(csv_file='val.csv')
 test_dataset = CityScapesDataset(csv_file='test.csv')
 train_loader = DataLoader(dataset=train_dataset,

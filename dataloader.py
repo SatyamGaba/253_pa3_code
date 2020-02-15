@@ -5,6 +5,7 @@ from PIL import Image
 import torch
 import pandas as pd
 from collections import namedtuple
+import random
 
 n_class    = 34
 means     = np.array([103.939, 116.779, 123.68]) / 255. # mean of three channels in the order of BGR
@@ -86,6 +87,7 @@ class CityScapesDataset(Dataset):
         self.means     = means
         self.n_class   = n_class
         # Add any transformations here
+        self.transforms = transforms
 
     def __len__(self):
         return len(self.data)
@@ -113,5 +115,12 @@ class CityScapesDataset(Dataset):
 #         target = torch.zeros(self.n_class, h, w)
 #         for c in range(self.n_class):
 #             target[c][label == c] = 1
+        
+        # augmentation
+        seed = random.randint(0, 2**32)
+        self._set_seed(seed)
+        img = self.transforms(img)
+        self._set_seed(seed)
+        label = self.transforms(label)
 
         return img, label#target, label
