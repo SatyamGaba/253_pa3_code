@@ -99,10 +99,20 @@ class CityScapesDataset(Dataset):
     def __getitem__(self, idx):
         img_name   = self.data.iloc[idx, 0]
 
-        img = np.asarray(Image.open(img_name).convert('RGB'))
+        img = Image.open(img_name).convert('RGB')
         label_name = self.data.iloc[idx, 1]
-        label      = np.asarray(Image.open(label_name))
-
+        label      = Image.open(label_name)
+        
+        # augmentation
+        seed = random.randint(0, 2**32)
+        self._set_seed(seed)
+        img = self.transforms(img)
+        self._set_seed(seed)
+        label = self.transforms(label)
+        
+        img = np.asarray(img)
+        label = np.asarray(label)
+        
         # reduce mean
         img = img[:, :, ::-1]  # switch to BGR
         img = np.transpose(img, (2, 0, 1)) / 255.
@@ -119,12 +129,5 @@ class CityScapesDataset(Dataset):
 #         target = torch.zeros(self.n_class, h, w)
 #         for c in range(self.n_class):
 #             target[c][label == c] = 1
-        
-        # augmentation
-        seed = random.randint(0, 2**32)
-        self._set_seed(seed)
-        img = self.transforms(img)
-        self._set_seed(seed)
-        label = self.transforms(label)
 
         return img, label#target, label

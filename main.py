@@ -18,8 +18,9 @@ torch.cuda.empty_cache()
 augs = [
     transforms.RandomCrop(512,1024),
     transforms.RandomResizedCrop(299),
-    transforms.RandomRotation(45)
-#    transforms.ToTensor()
+    transforms.RandomRotation(45),
+    transforms.RandomHorizontalFlip(0.5),
+    transforms.RandomVerticalFlip(0.5)
 ]
 tfs = transforms.Compose(augs)
 
