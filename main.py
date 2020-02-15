@@ -16,9 +16,8 @@ from tqdm import tqdm, tqdm_notebook
 torch.cuda.empty_cache()
 
 augs = [
-    transforms.RandomCrop(512,1024),
-    transforms.RandomResizedCrop(299),
-    transforms.RandomRotation(45),
+    transforms.RandomCrop(320),
+    transforms.RandomRotation((0,90)),
     transforms.RandomHorizontalFlip(0.5),
     transforms.RandomVerticalFlip(0.5)
 ]
