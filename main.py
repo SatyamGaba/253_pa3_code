@@ -31,7 +31,7 @@ train_loader = DataLoader(dataset=train_dataset,
                           shuffle=False, 
                          )
 val_loader = DataLoader(dataset=val_dataset,
-                          batch_size=1,
+                          batch_size=2,
                           num_workers=0,
                           shuffle=False)
 test_loader = DataLoader(dataset=test_dataset,
@@ -47,12 +47,18 @@ def init_weights(m):
 #         torch.nn.init.xavier_uniform(m.bias.data, 0)
         nn.init.constant_(m.bias, 0)
 
-model_name = "basic_fcn"  # To create directory to save trained models
-try:
+# create directories to save trained models
+if not os.path.isdir("./saved_models"):
+    os.system("mkdir ./saved_models")
+
+model_name = "basic_fcn" # sub-directory name
+
+if not os.path.isdir("./saved_models/%s"%(model_name)):
     os.system('mkdir ./saved_models/%s'%(model_name))
-except:
+else:
     print("directory already exists")
-    pass
+
+
 n_class = 34
 epochs = 20
 criterion = nn.CrossEntropyLoss() # Choose an appropriate loss function from https://pytorch.org/docs/stable/_modules/torch/nn/modules/loss.html
@@ -68,10 +74,10 @@ if use_gpu:
     print("GPU is available")
     model = model.cuda()
     
-def train():
+def train(init_epoch=0):
     train_losses = []
     val_losses = []
-    for epoch in range(epochs):
+    for epoch in range(init_epoch, epochs):
         running_loss = 0.0
         ts = time.time()
         for iter, (X, Y) in tqdm(enumerate(train_loader), desc ="Iteration num: "): # X=input_images, tar=one-hot labelled, y=segmentated
@@ -215,5 +221,5 @@ def test():
     
 if __name__ == "__main__":
     # val(0)  # show the accuracy before training
-    train()
+    train(init_epoch=0)  # put last trained epoch number, if resuming the training
     test()
