@@ -25,7 +25,7 @@ class FCN(nn.Module):
         self.deconv3 = nn.ConvTranspose2d(128, 64, kernel_size=3, stride=2, padding=1,  output_padding=1)
         self.bn3     = nn.BatchNorm2d(64)
         self.deconv4 = nn.ConvTranspose2d(64, 32, kernel_size=3, stride=2, padding=1, output_padding=1)
-        self.bn4     = nn.BatchNorm2d(64)       
+        self.bn4     = nn.BatchNorm2d(32)       
         
         self.classifier = nn.Conv2d(32, 34, kernel_size=1)
 
