@@ -32,16 +32,16 @@ if augmentx:
     train_dataset = CityScapesDataset(csv_file='train.csv', transforms=tfs)
 else:
     aug_str = ""
-    train_dataset = CityScapesDataset(csv_file='train.csv', transforms=transforms.RandomCrop(512,512))
+    train_dataset = CityScapesDataset(csv_file='train.csv')
 val_dataset = CityScapesDataset(csv_file='val.csv')
 test_dataset = CityScapesDataset(csv_file='test.csv')
 train_loader = DataLoader(dataset=train_dataset,
-                          batch_size=2,
+                          batch_size=4,
                           num_workers=0,
                           shuffle=True, 
                          )
 val_loader = DataLoader(dataset=val_dataset,
-                          batch_size=1,
+                          batch_size=2,
                           num_workers=0,
                           shuffle=True)
 test_loader = DataLoader(dataset=test_dataset,
@@ -61,7 +61,7 @@ def init_weights(m):
 if not os.path.isdir("./saved_models"):
     os.system("mkdir ./saved_models")
 
-model_name = "basic_fcn" # sub-directory name
+model_name = "basic_fcn_full" # sub-directory name
 
 if not os.path.isdir("./saved_models/%s"%(model_name)):
     os.system('mkdir ./saved_models/%s'%(model_name))
@@ -75,11 +75,9 @@ criterion = nn.CrossEntropyLoss().cuda() # Choose an appropriate loss function f
 # model = Resnet18(n_class=n_class)
 model = FCN(n_class=n_class)
 model.apply(init_weights)
-# model.load_state_dict(torch.load('./saved_models/%s/basic_fcn__9_1.306'%(model_name)))
+# model.load_state_dict(torch.load('./saved_models/%s/basic_fcn__17_0.425'%(model_name)))
 optimizer = optim.Adam(model.parameters(), lr=5e-3)
 
-c_map = [lab[-1] for lab in labels_classes]
-c_map = np.array(c_map)
 
 use_gpu = torch.cuda.is_available()
 if use_gpu:
@@ -118,8 +116,8 @@ def train(init_epoch=0):
         
         print("Finish epoch {}, time elapsed {}".format(epoch, time.time() - ts))
         # os.system('rm -r ./saved_models/%s/*'%(model_name))
-        torch.save(model.state_dict(), "./saved_models/%s/%s_%s_%d_%.3f"%(model_name,model_name,aug_str,epoch,loss.item()))
         train_loss = running_loss/len(train_loader)
+        torch.save(model.state_dict(), "./saved_models/%s/%s_%s_%d_%.3f"%(model_name,model_name,aug_str,epoch,train_loss))
         train_losses.append(train_loss)
         val_loss, val_pix_acc, avg_iou, ious = val(epoch)
         torch.cuda.empty_cache()
@@ -183,16 +181,11 @@ def val(epoch):
         total = predict.size
         val_pix_acc = 100.*correct/total
         
-        pred_imgs = [labels_classes['color'][p] for p in predict]
-        for pred_img in pred_imgs:
-            plt.imshow(pred_img)
-            plt.show()
-        
         curr_in, curr_un = iou(predict, labels)
         inters = [inters[p]+curr_in[p] for p in range(len(inters))]
         unions = [unions[p]+curr_un[p] for p in range(len(unions))]
-        if iter == 5:
-            break
+        # if iter == 5:
+        #     break
 
     ious = [inters[p]/unions[p] if unions[p]!=0 else 0 for p in range(len(inters))]
     avg_iou = sum(inters)/sum(unions)        
@@ -211,39 +204,54 @@ def test():
     #Complete this function - Calculate loss, accuracy and IoU for every epoch
     # Make sure to include a softmax after the output from your model
     # Evaluate
+    total = 0
+    correct = 0
+    running_loss = 0.0
     
+    inters = [0 for i in range(19)]
+    unions = [0 for i in range(19)]
     for iter, (inputs, labels) in tqdm(enumerate(val_loader)):
         inputs, labels = inputs, labels.long()
         if use_gpu:
             inputs, labels = inputs.cuda(), labels.cuda()
 
         outputs = model(inputs)
+        loss = criterion(outputs, labels)
+        running_loss += loss.item() * inputs.size(0)
+        
         outputs = outputs.cpu()
         outputs = outputs.detach().numpy()
+        labels = labels.cpu()
+        labels = labels.detach().numpy()
 
         predict = np.argmax(outputs, axis = 1)
+        correct += np.where(predict == labels, 1, 0).sum()
+        total += predict.size
+
+        curr_in, curr_un = iou(predict, labels)
+        inters = [inters[p]+curr_in[p] for p in range(len(inters))]
+        unions = [unions[p]+curr_un[p] for p in range(len(unions))]
+        if iter == 5:
+            break
+
+    ious = [inters[p]/unions[p] if unions[p]!=0 else 0 for p in range(len(inters))]
+    avg_iou = sum(ious)/len(ious)
+    test_acc = 100 * (correct/total)      
     
-        pred_imgs = [c_map[p] for p in predict]
-        
-        for i in range(inputs.size(0)):
-            img = inputs[i]
-            img = (img - torch.min(img))/(torch.max(img)-torch.min(img))
-            plt.imshow(img.permute(1,2,0).cpu().numpy())
-            plt.show()
-            plt.imshow(pred_imgs[i])
-            plt.show()
-            plt.imshow(img.permute(1,2,0).cpu().numpy())
-            plt.imshow(pred_imgs[i], alpha=0.25)
-            plt.show()
-            
+    print('Test Pixel Acc : %.3f' % (test_acc))
+    print('--------------------------------------------------------------')
+    print('Test Avg IOU : %.3f' % (avg_iou))
+    print('--------------------------------------------------------------')
+    print("Average Test IOU values for each class : ", ious)
+    
 
     #Complete this function - Calculate accuracy and IoU 
     # Make sure to include a softmax after the output from your model
     
 if __name__ == "__main__":
-    val_loss_0 = val(0)  # show the accuracy before training
-    print("validation loss at epoch 0 :", str(val_loss_0))
-    train(init_epoch=18)  # put last trained epoch number + 1, if resuming the training
+    # val_loss_0 = val(0)  # show the accuracy before training
+    # print("validation loss at epoch 0 :", str(val_loss_0))
+    train(init_epoch=0)  # put last trained epoch number + 1, if resuming the training
     # test()
 
-#     print("validation loss at epoch 0 :", str(val_loss_0))
+    # print("validation loss at epoch 0 :", str(val_loss_0))
