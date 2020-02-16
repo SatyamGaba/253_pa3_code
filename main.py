@@ -66,16 +66,16 @@ model_name = "basic_fcn" # sub-directory name
 if not os.path.isdir("./saved_models/%s"%(model_name)):
     os.system('mkdir ./saved_models/%s'%(model_name))
 else:
-    print("directory already exists")
+    pass
 
 
 n_class = 34
-epochs = 2
-criterion = nn.CrossEntropyLoss() # Choose an appropriate loss function from https://pytorch.org/docs/stable/_modules/torch/nn/modules/loss.html
+epochs = 20
+criterion = nn.CrossEntropyLoss().cuda() # Choose an appropriate loss function from https://pytorch.org/docs/stable/_modules/torch/nn/modules/loss.html
 # model = Resnet18(n_class=n_class)
 model = FCN(n_class=n_class)
-model.apply(init_weights)
-# model.load_state_dict(torch.load('./saved_models/%s/resnet18_1'%(model_name)))
+# model.apply(init_weights)
+model.load_state_dict(torch.load('./saved_models/%s/basic_fcn__9_1.306'%(model_name)))
 optimizer = optim.Adam(model.parameters(), lr=5e-3)
 
 
@@ -109,8 +109,8 @@ def train(init_epoch=0):
             loss.backward()
             optimizer.step()
             running_loss += loss.item() * inputs.size(0)
-            if iter == 5:
-                break
+            # if iter == 5:
+            #     break
             if iter % 50 == 0:
                 print("epoch{}, iter{}, loss: {}".format(epoch, iter, loss.item()))
         
@@ -139,7 +139,7 @@ def train(init_epoch=0):
         model.train()
         torch.cuda.empty_cache()
         
-    x = [i for i in range(epochs)]
+    x = [i for i in range(len(train_losses))]
     plt.title("ResNet: Plot of Training/Validation Loss vs # epochs")
     plt.xlabel("Number of epochs")
     plt.ylabel("Loss")
@@ -184,8 +184,8 @@ def val(epoch):
         curr_in, curr_un = iou(predict, labels)
         inters = [inters[p]+curr_in[p] for p in range(len(inters))]
         unions = [unions[p]+curr_un[p] for p in range(len(unions))]
-        if iter == 5:
-            break
+        # if iter == 5:
+        #     break
 
     ious = [inters[p]/unions[p] if unions[p]!=0 else 0 for p in range(len(inters))]
     avg_iou = sum(inters)/sum(unions)        
@@ -250,7 +250,8 @@ def test():
     
 if __name__ == "__main__":
     val_loss_0 = val(0)  # show the accuracy before training
-    train(init_epoch=0)  # put last trained epoch number, if resuming the training
-    test()
+    print("validation loss at epoch 0 :", str(val_loss_0))
+    train(init_epoch=0)  # put last trained epoch number + 1, if resuming the training
+    # test()
 
     print("validation loss at epoch 0 :", str(val_loss_0))
