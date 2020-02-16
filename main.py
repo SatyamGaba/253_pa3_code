@@ -36,12 +36,12 @@ else:
 val_dataset = CityScapesDataset(csv_file='val.csv')
 test_dataset = CityScapesDataset(csv_file='test.csv')
 train_loader = DataLoader(dataset=train_dataset,
-                          batch_size=4,
+                          batch_size=2,
                           num_workers=0,
                           shuffle=True, 
                          )
 val_loader = DataLoader(dataset=val_dataset,
-                          batch_size=2,
+                          batch_size=1,
                           num_workers=0,
                           shuffle=True)
 test_loader = DataLoader(dataset=test_dataset,
@@ -74,10 +74,12 @@ epochs = 20
 criterion = nn.CrossEntropyLoss().cuda() # Choose an appropriate loss function from https://pytorch.org/docs/stable/_modules/torch/nn/modules/loss.html
 # model = Resnet18(n_class=n_class)
 model = FCN(n_class=n_class)
-# model.apply(init_weights)
-model.load_state_dict(torch.load('./saved_models/%s/basic_fcn__9_1.306'%(model_name)))
+model.apply(init_weights)
+# model.load_state_dict(torch.load('./saved_models/%s/basic_fcn__9_1.306'%(model_name)))
 optimizer = optim.Adam(model.parameters(), lr=5e-3)
 
+c_map = [lab[-1] for lab in labels_classes]
+c_map = np.array(c_map)
 
 use_gpu = torch.cuda.is_available()
 if use_gpu:
@@ -181,11 +183,16 @@ def val(epoch):
         total = predict.size
         val_pix_acc = 100.*correct/total
         
+        pred_imgs = [labels_classes['color'][p] for p in predict]
+        for pred_img in pred_imgs:
+            plt.imshow(pred_img)
+            plt.show()
+        
         curr_in, curr_un = iou(predict, labels)
         inters = [inters[p]+curr_in[p] for p in range(len(inters))]
         unions = [unions[p]+curr_un[p] for p in range(len(unions))]
-        # if iter == 5:
-        #     break
+        if iter == 5:
+            break
 
     ious = [inters[p]/unions[p] if unions[p]!=0 else 0 for p in range(len(inters))]
     avg_iou = sum(inters)/sum(unions)        
@@ -204,54 +211,39 @@ def test():
     #Complete this function - Calculate loss, accuracy and IoU for every epoch
     # Make sure to include a softmax after the output from your model
     # Evaluate
-    total = 0
-    correct = 0
-    running_loss = 0.0
     
-    inters = [0 for i in range(19)]
-    unions = [0 for i in range(19)]
     for iter, (inputs, labels) in tqdm(enumerate(val_loader)):
         inputs, labels = inputs, labels.long()
         if use_gpu:
             inputs, labels = inputs.cuda(), labels.cuda()
 
         outputs = model(inputs)
-        loss = criterion(outputs, labels)
-        running_loss += loss.item() * inputs.size(0)
-        
         outputs = outputs.cpu()
         outputs = outputs.detach().numpy()
-        labels = labels.cpu()
-        labels = labels.detach().numpy()
 
         predict = np.argmax(outputs, axis = 1)
-        correct += np.where(predict == labels, 1, 0).sum()
-        total += predict.size
-
-        curr_in, curr_un = iou(predict, labels)
-        inters = [inters[p]+curr_in[p] for p in range(len(inters))]
-        unions = [unions[p]+curr_un[p] for p in range(len(unions))]
-        if iter == 5:
-            break
-
-    ious = [inters[p]/unions[p] if unions[p]!=0 else 0 for p in range(len(inters))]
-    avg_iou = sum(ious)/len(ious)
-    test_acc = 100 * (correct/total)      
     
-    print('Test Pixel Acc : %.3f' % (test_acc))
-    print('--------------------------------------------------------------')
-    print('Test Avg IOU : %.3f' % (avg_iou))
-    print('--------------------------------------------------------------')
-    print("Average Test IOU values for each class : ", ious)
-    
+        pred_imgs = [c_map[p] for p in predict]
+        
+        for i in range(inputs.size(0)):
+            img = inputs[i]
+            img = (img - torch.min(img))/(torch.max(img)-torch.min(img))
+            plt.imshow(img.permute(1,2,0).cpu().numpy())
+            plt.show()
+            plt.imshow(pred_imgs[i])
+            plt.show()
+            plt.imshow(img.permute(1,2,0).cpu().numpy())
+            plt.imshow(pred_imgs[i], alpha=0.25)
+            plt.show()
+            
 
     #Complete this function - Calculate accuracy and IoU 
     # Make sure to include a softmax after the output from your model
     
 if __name__ == "__main__":
-    val_loss_0 = val(0)  # show the accuracy before training
-    print("validation loss at epoch 0 :", str(val_loss_0))
-    train(init_epoch=0)  # put last trained epoch number + 1, if resuming the training
-    # test()
+#     val_loss_0 = val(0)  # show the accuracy before training
+#     print("validation loss at epoch 0 :", str(val_loss_0))
+#     train(init_epoch=0)  # put last trained epoch number + 1, if resuming the training
+    test()
 
-    print("validation loss at epoch 0 :", str(val_loss_0))
+#     print("validation loss at epoch 0 :", str(val_loss_0))
