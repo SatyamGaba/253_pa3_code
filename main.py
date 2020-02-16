@@ -8,10 +8,14 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torch.autograd import Variable
 import time, os
+import csv
 import matplotlib.pyplot as plt
 from tqdm import tqdm, tqdm_notebook
 
 torch.cuda.empty_cache()
+
+if not os.path.isdir("./results"):
+    os.system('mkdir ./results')
 
 augment = [
     transforms.RandomCrop(320),
@@ -66,7 +70,7 @@ else:
 
 
 n_class = 34
-epochs = 50
+epochs = 2
 criterion = nn.CrossEntropyLoss() # Choose an appropriate loss function from https://pytorch.org/docs/stable/_modules/torch/nn/modules/loss.html
 # model = Resnet18(n_class=n_class)
 model = FCN(n_class=n_class)
@@ -101,20 +105,23 @@ def train(init_epoch=0):
             loss.backward()
             optimizer.step()
             running_loss += loss.item() * inputs.size(0)
-            # if iter == 5:
-            #     break
+            if iter == 5:
+                break
             if iter % 50 == 0:
                 print("epoch{}, iter{}, loss: {}".format(epoch, iter, loss.item()))
         
         print("Finish epoch {}, time elapsed {}".format(epoch, time.time() - ts))
         # os.system('rm -r ./saved_models/%s/*'%(model_name))
         torch.save(model.state_dict(), "./saved_models/%s/%s_%s_%d_%.3f"%(model_name,model_name,aug_str,epoch,loss.item()))
-        
-        train_losses.append(running_loss/len(train_loader))
-        val_loss = val(epoch)
+        train_loss = running_loss/len(train_loader)
+        train_losses.append(train_loss)
+        val_loss, val_pix_acc, avg_iou, ious = val(epoch)
         torch.cuda.empty_cache()
         val_losses.append(val_loss)
-        
+        with open("./results/"+model_name+"_results.csv",'a+', newline='') as csv_file:
+            writer = csv.writer(csv_file, delimiter=',')
+            # writer.writerow(["Epoch", "Train Loss", "Val Loss", "Val Pix Acc", "Val Avg IOU", "Val all IOU"])
+            writer.writerow([epoch, train_loss,val_loss, val_pix_acc, avg_iou, ious])
         model.train()
         torch.cuda.empty_cache()
         
@@ -158,12 +165,13 @@ def val(epoch):
         predict = np.argmax(outputs, axis = 1)
         correct = np.where(predict == labels, 1, 0).sum()
         total = predict.size
+        val_pix_acc = 100.*correct/total
         
         curr_in, curr_un = iou(predict, labels)
         inters = [inters[p]+curr_in[p] for p in range(len(inters))]
         unions = [unions[p]+curr_un[p] for p in range(len(unions))]
-        # if iter == 5:
-        #     break
+        if iter == 5:
+            break
 
     ious = [inters[p]/unions[p] if unions[p]!=0 else 0 for p in range(len(inters))]
     avg_iou = sum(inters)/sum(unions)        
@@ -175,8 +183,7 @@ def val(epoch):
     print('--------------------------------------------------------------')
     print("IOU values for each class at the end of epoch ", epoch+1," are:", ious)
     
-
-    return (running_loss/len(val_loader))
+    return (running_loss/len(val_loader)), val_pix_acc, avg_iou, ious
 
 def test():
     model.eval() 
@@ -210,8 +217,8 @@ def test():
         curr_in, curr_un = iou(predict, labels)
         inters = [inters[p]+curr_in[p] for p in range(len(inters))]
         unions = [unions[p]+curr_un[p] for p in range(len(unions))]
-        # if iter == 5:
-        #     break
+        if iter == 5:
+            break
 
     ious = [inters[p]/unions[p] if unions[p]!=0 else 0 for p in range(len(inters))]
     avg_iou = sum(ious)/len(ious)
