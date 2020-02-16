@@ -87,6 +87,10 @@ if use_gpu:
 def train(init_epoch=0):
     train_losses = []
     val_losses = []
+    prev_loss = -100
+    loss_increase_counter = 0
+    early_stop = True
+    early_stop_threshold = 5
     for epoch in range(init_epoch, epochs):
         running_loss = 0.0
         ts = time.time()
@@ -122,6 +126,16 @@ def train(init_epoch=0):
             writer = csv.writer(csv_file, delimiter=',')
             # writer.writerow(["Epoch", "Train Loss", "Val Loss", "Val Pix Acc", "Val Avg IOU", "Val all IOU"])
             writer.writerow([epoch, train_loss,val_loss, val_pix_acc, avg_iou, ious])
+        
+        if val_loss > prev_loss:
+            loss_increase_counter += 1
+        else:
+            loss_increase_counter = 0
+        if early_stop and loss_increase_counter > early_stop_threshold:
+            print("Early Stopping..")
+            break
+        prev_loss = val_loss
+
         model.train()
         torch.cuda.empty_cache()
         
