@@ -8,11 +8,19 @@ class FCN(nn.Module):
         self.pool = nn.MaxPool2d(2,stride = 2)
         self.conv1   = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1)
         self.bnd1    = nn.BatchNorm2d(64)
-        self.conv2   = nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1)
-        self.bnd2    = nn.BatchNorm2d(128)
-        self.conv3   = nn.Conv2d(128, 256, kernel_size=3, stride=2, padding=1, dilation = 1)
-        self.bnd3    = nn.BatchNorm2d(256)          
-       
+        self.conv2   = nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1)
+        self.bnd2    = nn.BatchNorm2d(64)
+        self.conv3   = nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1)
+        self.bnd3    = nn.BatchNorm2d(128)
+        self.conv4   = nn.Conv2d(128, 128, kernel_size=3, stride=1, padding=1)
+        self.bnd4    = nn.BatchNorm2d(128)
+        self.conv5   = nn.Conv2d(128, 256, kernel_size=3, stride=2, padding=1, dilation = 1)
+        self.bnd5    = nn.BatchNorm2d(256)          
+        self.conv6   = nn.Conv2d(256, 256, kernel_size=3, stride=2, padding=1, dilation = 1)
+        self.bnd6    = nn.BatchNorm2d(256)
+        self.conv7   = nn.Conv2d(256, 256, kernel_size=3, stride=2, padding=1, dilation = 1)
+        self.bnd7    = nn.BatchNorm2d(256)
+        
         self.relu    = nn.ReLU(inplace=True)
        
         self.deconv1 = nn.ConvTranspose2d(256, 256, kernel_size=3, stride=2, padding=1, dilation = 1,  output_padding=1)
@@ -26,14 +34,15 @@ class FCN(nn.Module):
     def forward(self, x):
         # Complete the forward function for the rest of the encoder
         x = self.bnd1(self.relu(self.conv1(x)))
-        x = self.bnd1(self.pool(self.relu(self.conv1(x))))
 
-        x = self.bnd2(self.relu(self.conv2(x)))
         x = self.bnd2(self.pool(self.relu(self.conv2(x))))
 
         x = self.bnd3(self.relu(self.conv3(x)))
-        x = self.bnd3(self.relu(self.conv3(x)))                        
-        out_encoder = self.bnd3(self.pool(self.relu(self.conv3(x))))
+        x = self.bnd4(self.pool(self.relu(self.conv4(x))))
+
+        x = self.bnd5(self.relu(self.conv5(x)))
+        x = self.bnd6(self.relu(self.conv6(x)))                        
+        out_encoder = self.bnd7(self.pool(self.relu(self.conv7(x))))
 
         x = self.bn1(self.relu(self.deconv1(out_encoder))) # ** = score in starter code
 
