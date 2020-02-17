@@ -17,6 +17,7 @@ torch.cuda.empty_cache()
 if not os.path.isdir("./results"):
     os.system('mkdir ./results')
 
+# applying transforms
 augment = [
     transforms.RandomCrop(320),
     transforms.RandomRotation((0,90)),
@@ -140,7 +141,8 @@ def train(init_epoch=0):
 
         model.train()
         torch.cuda.empty_cache()
-        
+    
+    # Plots of losses
     x = [i for i in range(len(train_losses))]
     plt.title("ResNet: Plot of Training/Validation Loss vs # epochs")
     plt.xlabel("Number of epochs")
@@ -178,6 +180,7 @@ def val(epoch):
         labels = labels.cpu()
         labels = labels.detach().numpy()
 
+        # Calculating pixel accuracy
         predict = np.argmax(outputs, axis = 1)
         correct = np.where(predict == labels, 1, 0).sum()
         total = predict.size
@@ -188,6 +191,7 @@ def val(epoch):
             plt.imshow(pred_img)
             plt.show()
         
+        # Calculating IOU
         curr_in, curr_un = iou(predict, labels)
         inters = [inters[p]+curr_in[p] for p in range(len(inters))]
         unions = [unions[p]+curr_un[p] for p in range(len(unions))]
