@@ -1,9 +1,18 @@
 # Semantic Image Segmentation using CNN Architectures
 
 ## Idea
+Semantic Segmentation of an image is to assign each pixel in the input image a semantic class in order to get a pixel-wise dense classification.
 ![Semantic Segmentation](figures/semantic_segmentation.PNG)
+
+ We have performed the task of semantic segmentation on images from the CityScapes dataset. To go about this task, we have implemented a plethora of CNN architectures to compare performances. The metrics we have used to test our models are pixel accuracy, and Intersection-Over-Union (IOU, Jaccard Index) - explained in detail going ahead. The baseline model we used had 5 convolutional and 5 deconvolutional layers. This was followed by transforming the images to cater to mirror flips, image rotations and crops of different sizes - this ensures scale and rotational invariance. In the next model, we experimented with the number of layers in the CNN architecture and added pooling layers to enhance the performance by ensuring translation invariance. We dealt with the training bias because of different number of classes in the dataset using Dice loss. We eventually shifted our focus to transfer learning by using the pretrained ResNet18 network. Finally, we used the UNet architecture to perform the task of segmentation
+
 ## Goal
+* To perform semantic segmentation and comprehensive analysis on cityscape dataset using various architecture and techniques.
+* Visualization of output on a test image for all the experiments.
+
 ![Semantic Segmentation on Cityscape dataset](figures/sem_seg_cityscape.gif)
+
+
 
 ## How to use
 In "main.py" file:
@@ -14,7 +23,7 @@ In "main.py" file:
 * set `init_epoch` to the first epoch value for training. It will be zero when starting from scratch otherwise the epoch number
 * `early_stop_threshold` can be used to change the creteria for early stopping
 
-For Class imbalance case, Use `main_imbalance.py` and Dice Loss
+For Class imbalance case, Use `main_imbalance.py` and `diceLoss`
 
 ## Results
 
