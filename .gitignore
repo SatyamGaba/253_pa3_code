@@ -2,3 +2,4 @@
 __pycache__
 tempCodeRunnerFile.py
 *saved_models
+*misc/raw_data/*.csv
