@@ -72,14 +72,11 @@ else:
 
 n_class = 34
 epochs = 50
-criterion = nn.CrossEntropyLoss().cuda() # Choose an appropriate loss function from https://pytorch.org/docs/stable/_modules/torch/nn/modules/loss.html
-# use Resnet18 when performing Transfer Learning
-# model = Resnet18(n_class=n_class) 
+criterion = nn.CrossEntropyLoss() # Choose an appropriate loss function from https://pytorch.org/docs/stable/_modules/torch/nn/modules/loss.html
+# model = Resnet18(n_class=n_class)
 model = FCN(n_class=n_class)
-# model.apply(init_weights)
-# To load an earlier state of the model
-model.load_state_dict(torch.load('./saved_models/%s/basic_fcn__35_0.330'%(model_name)))
-# used Adam optimizer
+model.apply(init_weights)
+# model.load_state_dict(torch.load('./saved_models/%s/basic_fcn__35_0.330'%(model_name)))
 optimizer = optim.Adam(model.parameters(), lr=5e-3)
 
 c_map = [lab[-1] for lab in labels_classes]
@@ -189,13 +186,7 @@ def val(epoch):
         correct = np.where(predict == labels, 1, 0).sum()
         total = predict.size
         val_pix_acc = 100.*correct/total
-        
-        pred_imgs = [labels_classes['color'][p] for p in predict]
-        for pred_img in pred_imgs:
-            plt.imshow(pred_img)
-            plt.show()
-        
-        # Calculating IOU
+              
         curr_in, curr_un = iou(predict, labels)
         inters = [inters[p]+curr_in[p] for p in range(len(inters))]
         unions = [unions[p]+curr_un[p] for p in range(len(unions))]
@@ -252,9 +243,7 @@ def test():
     # Make sure to include a softmax after the output from your model
     
 if __name__ == "__main__":
-    # val_loss_0 = val(0)  # show the accuracy before training
+    val_loss_0 = val(0)  # show the accuracy before training
     # print("validation loss at epoch 0 :", str(val_loss_0))
-    # train(init_epoch=18)  # put last trained epoch number + 1, if resuming the training
-    test()
-
-#     print("validation loss at epoch 0 :", str(val_loss_0))
+    train(init_epoch=18)  # put last trained epoch number + 1, if resuming the training
+    # test()
