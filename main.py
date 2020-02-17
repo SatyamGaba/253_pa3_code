@@ -73,10 +73,13 @@ else:
 n_class = 34
 epochs = 50
 criterion = nn.CrossEntropyLoss().cuda() # Choose an appropriate loss function from https://pytorch.org/docs/stable/_modules/torch/nn/modules/loss.html
-# model = Resnet18(n_class=n_class)
+# use Resnet18 when performing Transfer Learning
+# model = Resnet18(n_class=n_class) 
 model = FCN(n_class=n_class)
 # model.apply(init_weights)
+# To load an earlier state of the model
 model.load_state_dict(torch.load('./saved_models/%s/basic_fcn__35_0.330'%(model_name)))
+# used Adam optimizer
 optimizer = optim.Adam(model.parameters(), lr=5e-3)
 
 c_map = [lab[-1] for lab in labels_classes]
@@ -130,6 +133,7 @@ def train(init_epoch=0):
             # writer.writerow(["Epoch", "Train Loss", "Val Loss", "Val Pix Acc", "Val Avg IOU", "Val all IOU"])
             writer.writerow([epoch, train_loss,val_loss, val_pix_acc, avg_iou, ious])
         
+        # Implemented early stopping
         if val_loss > prev_loss:
             loss_increase_counter += 1
         else:
