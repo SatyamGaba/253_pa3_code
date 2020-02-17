@@ -120,6 +120,7 @@ def train(init_epoch=0):
         torch.save(model.state_dict(), "./saved_models/%s/%s_%s_%d_%.3f"%(model_name,model_name,aug_str,epoch,train_loss))
         train_losses.append(train_loss)
         val_loss, val_pix_acc, avg_iou, ious = val(epoch)
+        del loss
         torch.cuda.empty_cache()
         val_losses.append(val_loss)
         with open("./results/"+model_name+"_results.csv",'a+', newline='') as csv_file:
@@ -170,7 +171,8 @@ def val(epoch):
         outputs = model(inputs)
         loss = criterion(outputs, labels)
         running_loss += loss.item() * inputs.size(0)
-        
+        del loss
+
         outputs = outputs.cpu()
         outputs = outputs.detach().numpy()
         labels = labels.cpu()
@@ -218,7 +220,8 @@ def test():
         outputs = model(inputs)
         loss = criterion(outputs, labels)
         running_loss += loss.item() * inputs.size(0)
-        
+        del loss
+
         outputs = outputs.cpu()
         outputs = outputs.detach().numpy()
         labels = labels.cpu()

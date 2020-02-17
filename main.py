@@ -47,7 +47,7 @@ val_loader = DataLoader(dataset=val_dataset,
 test_loader = DataLoader(dataset=test_dataset,
                           batch_size=1,
                           num_workers=0,
-                          shuffle=True)
+                          shuffle=False)  # keep to false to visualize the same image across different models
 
 
 
