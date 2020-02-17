@@ -29,9 +29,11 @@ class upconv(nn.Module):
     def __init__(self,ch_in,ch_out):
         super(upconv,self).__init__()
         self.up = nn.Sequential(
-            nn.ConvTranspose2d(ch_in , ch_out , kernel_size=2, stride=2),
+                nn.ConvTranspose2d(ch_in , ch_out , kernel_size=2, stride=2),
+#                nn.Upsample(scale_factor=2, mode = 'bilinear', align_corners = True),
+#                nn.Conv2d(ch_in , ch_out , kernel_size=1, stride=1),
 		    nn.BatchNorm2d(ch_out),
-			nn.ReLU(inplace=True)
+#			nn.ReLU(inplace=True)
             
         )
 
@@ -39,32 +41,32 @@ class upconv(nn.Module):
         x = self.up(x)
         return x
 
-class UNET(nn.Module):
+class UNET(nn.Module): 
 
     def __init__(self, n_class):
         super().__init__()
         self.n_class = n_class
         self.Maxpool = nn.MaxPool2d(kernel_size=2,stride=2)
         
-        self.conv1 = convchain(ch_in = 3, ch_out = 64)
-        self.conv2 = convchain(ch_in = 64, ch_out = 128)
-        self.conv3 = convchain(ch_in = 128, ch_out = 256)
-        self.conv4 = convchain(ch_in = 256, ch_out = 512)
-        self.conv5 = convchain(ch_in = 512, ch_out = 1024)
+        self.conv1 = convchain(ch_in = 3, ch_out = 32)
+        self.conv2 = convchain(ch_in = 32, ch_out = 64)
+        self.conv3 = convchain(ch_in = 64, ch_out = 128)
+        self.conv4 = convchain(ch_in = 128, ch_out = 256)
+        self.conv5 = convchain(ch_in = 256, ch_out = 512)
         
-        self.up5 = upconv(ch_in = 1024, ch_out = 512)
-        self.upconv5 = convchain(ch_in = 1024, ch_out = 512)
+        self.up5 = upconv(ch_in = 512, ch_out = 256)
+        self.upconv5 = convchain(ch_in = 512, ch_out = 256)
         
-        self.up4 = upconv(ch_in = 512, ch_out = 256)
-        self.upconv4 = convchain(ch_in = 512, ch_out = 256)
+        self.up4 = upconv(ch_in = 256, ch_out = 128)
+        self.upconv4 = convchain(ch_in = 256, ch_out = 128)
         
-        self.up3 = upconv(ch_in = 256, ch_out = 128)
-        self.upconv3 = convchain(ch_in = 256, ch_out = 128)
+        self.up3 = upconv(ch_in = 128, ch_out = 64)
+        self.upconv3 = convchain(ch_in = 128, ch_out = 64)
         
-        self.up2 = upconv(ch_in = 128, ch_out = 64)
-        self.upconv2 = convchain(ch_in = 128, ch_out = 64)
+        self.up2 = upconv(ch_in = 64, ch_out = 32)
+        self.upconv2 = convchain(ch_in = 64, ch_out = 34)
         
-        self.Conv_1 = nn.Conv2d(64, n_class ,kernel_size=1,stride=1,padding=0)
+        self.conv_1 = nn.Conv2d(34, n_class ,kernel_size=1,stride=1,padding=0)
         
 
     def forward(self,x):
@@ -87,19 +89,26 @@ class UNET(nn.Module):
         d5 = self.up5(x5)
         d5 = torch.cat((x4,d5),dim=1)
         d5 = self.upconv5(d5)
-        
+                
         d4 = self.up4(d5)
         d4 = torch.cat((x3,d4),dim=1)
         d4 = self.upconv4(d4)
+        
+        
 
-        d3 = self.up3(d4)
+        d3 = self.up3(d4) #original was d4
         d3 = torch.cat((x2,d3),dim=1)
         d3 = self.upconv3(d3)
+        
+        del x2
 
         d2 = self.up2(d3)
+        print (d2.size(), x1.size())
         d2 = torch.cat((x1,d2),dim=1)
+        print (x1.size())
         d2 = self.upconv2(d2)
-
-        d1 = self.Conv_1x1(d2)
+        
+        del x1, d3, x3, d4, d5, x5, x4
+        d1 = self.conv_1(d2)
 
         return d1
