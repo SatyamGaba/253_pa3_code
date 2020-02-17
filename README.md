@@ -1,7 +1,7 @@
 # Semantic Image Segmentation using CNN Architectures
 
 ## Idea
-![Semantic Segmentation](figures/semantic_segmentation.png)
+![Semantic Segmentation](figures/semantic_segmentation.PNG)
 ## Goal
 ![Semantic Segmentation on Cityscape dataset](figures/sem_seg_cityscape.gif)
 
@@ -13,6 +13,8 @@ In "main.py" file:
 * use `model.apply(init_weights)` when training from scratch or use `model.load_state_dict(torch.load(<path/to/saved/model>))` when using pretrained weights of the same architecture
 * set `init_epoch` to the first epoch value for training. It will be zero when starting from scratch otherwise the epoch number
 * `early_stop_threshold` can be used to change the creteria for early stopping
+
+For Class imbalance case, Use `main_imbalance.py` and Dice Loss
 
 ## Results
 
