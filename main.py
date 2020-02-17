@@ -74,8 +74,8 @@ epochs = 50
 criterion = nn.CrossEntropyLoss().cuda() # Choose an appropriate loss function from https://pytorch.org/docs/stable/_modules/torch/nn/modules/loss.html
 # model = Resnet18(n_class=n_class)
 model = FCN(n_class=n_class)
-model.apply(init_weights)
-# model.load_state_dict(torch.load('./saved_models/%s/basic_fcn__9_1.306'%(model_name)))
+# model.apply(init_weights)
+model.load_state_dict(torch.load('./saved_models/%s/basic_fcn__35_0.330'%(model_name)))
 optimizer = optim.Adam(model.parameters(), lr=5e-3)
 
 c_map = [lab[-1] for lab in labels_classes]
@@ -229,21 +229,24 @@ def test():
             img = inputs[i]
             img = (img - torch.min(img))/(torch.max(img)-torch.min(img))
             plt.imshow(img.permute(1,2,0).cpu().numpy())
-            plt.show()
+            # plt.show() # will not work with ssh
+            plt.savefig("./results/%s-img-%d"%(model_name,i))
             plt.imshow(pred_imgs[i])
-            plt.show()
+            # plt.show()
+            plt.savefig("./results/%s-pred-%d"%(model_name,i))
             plt.imshow(img.permute(1,2,0).cpu().numpy())
-            plt.imshow(pred_imgs[i], alpha=0.25)
-            plt.show()
+            plt.imshow(pred_imgs[i], alpha=0.5)
+            # plt.show()
+            plt.savefig("./results/%s-pred_img-%d"%(model_name,i))
             
 
     #Complete this function - Calculate accuracy and IoU 
     # Make sure to include a softmax after the output from your model
     
 if __name__ == "__main__":
-    val_loss_0 = val(0)  # show the accuracy before training
-    print("validation loss at epoch 0 :", str(val_loss_0))
-    train(init_epoch=18)  # put last trained epoch number + 1, if resuming the training
-    # test()
+    # val_loss_0 = val(0)  # show the accuracy before training
+    # print("validation loss at epoch 0 :", str(val_loss_0))
+    # train(init_epoch=18)  # put last trained epoch number + 1, if resuming the training
+    test()
 
 #     print("validation loss at epoch 0 :", str(val_loss_0))
