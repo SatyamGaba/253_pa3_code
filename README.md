@@ -26,6 +26,8 @@ In "main.py" file:
 For Class imbalance case, Use `main_imbalance.py` and `diceLoss`
 
 ## Results
+The models have not be training completely due to limited computation available with us at time of training. <br/>
+The images presented below are after training 10-15 epochs from scratch. There is a huge scope of improvement in the results with further training. However, the results are sufficient to observe the segmentation and make a comparision between the models. 
 
 ### Basic FCN
 ![Results on Basic FCN](figures/basic_fcn_vis.png)
@@ -43,7 +45,7 @@ For Class imbalance case, Use `main_imbalance.py` and `diceLoss`
 ![Results on Basic FCN](figures/resnet_vis.png)
 
 ### UNet
-![Results on Basic FCN](figures/unet_vis.png)
+![Results on Basic FCN](figures/unet_vis.PNG)
 
 ## Summary
 
